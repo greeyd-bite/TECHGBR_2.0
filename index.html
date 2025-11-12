@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>TECHGBR v2.0 — Inventario & Venta</title>
+  <style>
+    :root{
+      --bg:#071022; --card:#0b1220; --muted:#9aa4b2;
+      --accent-1:#6b21a8; --accent-2:#a78bfa; --accent-3:#efe6ff;
+      --success:#16a34a; --danger:#dc2626;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;
+      background:linear-gradient(180deg,#041025 0%, #071022 100%);color:#e6eef8;
+      -webkit-font-smoothing:antialiased;
+      padding:20px;
+    }
+    .container{max-width:1200px;margin:0 auto}
+    header{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+    header h1{margin:0;font-size:20px}
+    header .brand{display:flex;gap:12px;align-items:center}
+    .logo{
+      width:44px;height:44px;border-radius:8px;
+      background:linear-gradient(90deg,var(--accent-2),var(--accent-1));
+      display:flex;align-items:center;justify-content:center;font-weight:800;color:white;
+      font-size:18px;box-shadow:0 6px 18px rgba(2,6,23,0.6)
+    }
+    header p{margin:0;color:var(--muted);font-size:13px}
+
+    .grid{display:grid;grid-template-columns: 2fr 1fr; gap:20px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.03); border-radius:12px; padding:16px; box-shadow: 0 6px 18px rgba(2,6,23,0.6);}
+    .card h3{margin:0 0 8px;font-size:16px}
+    .muted{color:var(--muted);font-size:13px}
+    form .row{display:flex;gap:8px}
+    input, select, textarea, button{font-family:inherit}
+    input[type="text"], input[type="number"], input[type="url"], select, textarea{
+      padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit;width:100%;
+    }
+    textarea{min-height:56px}
+    .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    button{background:var(--accent-1);color:white;padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
+    button.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06)}
+    .small{padding:6px 8px;font-size:13px;border-radius:6px}
+    .flex-between{display:flex;justify-content:space-between;align-items:center}
+    .two-cols{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+    /* gallery */
+    .galeria{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-top:12px}
+    .thumb{background:rgba(255,255,255,0.02);padding:8px;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;gap:8px}
+    .thumb img{width:100%;height:110px;object-fit:cover;border-radius:6px}
+    .thumb .meta{display:flex;flex-direction:column;gap:4px}
+    .thumb .meta b{color:var(--accent-2)}
+
+    /* ventas cards */
+    .venta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
+    .venta-card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px}
+    .venta-card img{width:100%;height:140px;object-fit:cover;border-radius:8px}
+    .venta-card .info{display:flex;flex-direction:column;gap:4px}
+    .price{font-weight:700;color:var(--accent-2)}
+    .sold-badge{background:rgba(255,255,255,0.03);padding:6px;border-radius:6px;color:var(--muted);font-size:12px;text-align:center}
+
+    /* table */
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{padding:8px;text-align:left;color:var(--muted);font-size:13px;border-bottom:1px solid rgba(255,255,255,0.02)}
+    thead th{color:var(--accent-3)}
+    tr:hover td{color:#fff}
+
+    /* responsive */
+    @media (max-width:900px){ .grid{grid-template-columns:1fr} }
+    .right{margin-left:auto}
+
+    .stats .big{font-size:22px;font-weight:700;color:var(--accent-2)}
+    .muted-2{color:#b6b8c8;font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo">TG</div>
+        <div>
+          <h1>TECHGBR v2.0</h1>
+          <div class="muted">Inventario • Ventas • Galería</div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div class="muted">Presentación lista para GitHub Pages</div>
+        <div id="lastSaved" class="muted-2" style="font-size:12px">Último guardado: -</div>
+      </div>
+    </header>
+
+    <main class="grid">
+      <!-- LEFT: Form, Gallery, Venta -->
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <!-- Form -->
+        <div class="card">
+          <div class="flex-between">
+            <div>
+              <h3>Registrar equipo / agregar a venta</h3>
+              <div class="muted">Usa URL de imagen (opción seleccionada)</div>
+            </div>
+            <div class="muted">TECHGBR</div>
+          </div>
+
+          <form id="mainForm" style="margin-top:12px;display:grid;gap:8px">
+            <div class="two-cols">
+              <input id="f_marca" type="text" placeholder="Marca (Ej. Dell, HP, Samsung)" />
+              <input id="f_modelo" type="text" placeholder="Modelo (Ej. Inspiron 15)" />
+            </div>
+
+            <div class="two-cols">
+              <input id="f_cliente" type="text" placeholder="Nombre del cliente (si aplica)" />
+              <select id="f_tipo">
+                <option value="">Tipo (pc, celular...)</option>
+                <option>Computador de escritorio</option>
+                <option>Portátil</option>
+                <option>Monitor</option>
+                <option>Celular / Tablet</option>
+                <option>Impresora</option>
+                <option>Otro</option>
+              </select>
+            </div>
+
+            <div class="two-cols">
+              <select id="f_estado">
+                <option value="Ingresado">Ingresado</option>
+                <option value="En reparación">En reparación</option>
+                <option value="Reparado">Reparado</option>
+                <option value="Entregado">Entregado</option>
+              </select>
+              <input id="f_responsable" type="text" placeholder="Recibido por / Responsable" />
+            </div>
+
+            <div class="two-cols">
+              <input id="f_imgurl" type="url" placeholder="URL de imagen (https://...)" />
+              <input id="f_stock" type="number" placeholder="Stock (si lo pones a la venta) — cantidad" min="0" />
+            </div>
+
+            <div class="two-cols">
+              <input id="f_precio" type="number" placeholder="Precio (COP) — para venta (si aplica)" min="0" />
+              <input id="f_serial" type="text" placeholder="Serial / Código (opcional)" />
+            </div>
+
+            <textarea id="f_notas" placeholder="Observaciones / falla / accesorios"></textarea>
+
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+              <label style="display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px">
+                <input id="f_forSale" type="checkbox" /> &nbsp; Poner a la venta
+              </label>
+              <button type="button" id="btnAdd">Registrar</button>
+              <button type="button" id="btnClear" class="secondary">Limpiar</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Galeria / Catalogo -->
+        <div class="card">
+          <div class="flex-between">
+            <div>
+              <h3>Catálogo / Galería</h3>
+              <div class="muted">Vista visual de equipos registrados</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <input id="searchGlobal" type="text" placeholder="Buscar por marca, modelo, cliente..." style="min-width:220px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit" />
+              <select id="filterType" style="padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit">
+                <option value="">Filtrar tipo</option>
+                <option>Portátil</option>
+                <option>Computador de escritorio</option>
+                <option>Monitor</option>
+                <option>Celular / Tablet</option>
+                <option>Impresora</option>
+                <option>Otro</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="galeria" class="galeria"></div>
+        </div>
+
+        <!-- Equipos en venta -->
+        <div class="card">
+          <div class="flex-between">
+            <div>
+              <h3>Equipos en venta</h3>
+              <div class="muted">Muestra tarjeta con imagen, precio y stock</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button id="btnExportCSV" class="secondary">Exportar CSV</button>
+              <button id="btnReset" class="secondary">Reset datos</button>
+            </div>
+          </div>
+
+          <div id="ventaGrid" class="venta-grid" style="margin-top:12px"></div>
+        </div>
+      </div>
+
+      <!-- RIGHT: stats y lista -->
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="card stats">
+          <h3>Resumen rápido</h3>
+          <div style="display:grid;gap:8px;margin-top:12px">
+            <div style="display:flex;justify-content:space-between"><span class="muted">Total equipos</span><span id="statTotal" class="big">-</span></div>
+            <div style="display:flex;justify-content:space-between"><span class="muted">En reparación</span><span id="statRepair">-</span></div>
+            <div style="display:flex;justify-content:space-between"><span class="muted">Reparados</span><span id="statDone">-</span></div>
+            <div style="display:flex;justify-content:space-between"><span class="muted">En venta (items)</span><span id="statForSale">-</span></div>
+            <div style="display:flex;justify-content:space-between"><span class="muted">Ingresos estimados (ventas)</span><span id="statIncome" class="big">-</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Lista detallada</h3>
+          <div class="muted" style="margin-bottom:8px">Tabla de todos los registros (acciones rápidas)</div>
+          <div style="overflow:auto;max-height:420px">
+            <table>
+              <thead>
+                <tr><th>ID</th><th>Marca/Modelo</th><th>Cliente</th><th>Estado</th><th>Venta</th><th>Acciones</th></tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Consejos</h3>
+          <div class="muted" style="font-size:13px">
+            - Para la presentación, sube imágenes pequeñas alojadas en GitHub o Imgur y pega la URL. <br>
+            - Usa la sección “Equipos en venta” para mostrar stock y precios en vivo. <br>
+            - Si quieres, puedo darte una versión con login básico.
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+<script>
+/* TECHGBR v2.1 - con filtro por marca */
+const STORAGE_KEY = 'techgbr_v2_data_v1';
+let data = { equipos: [], ventas: [] };
+
+// DOM refs
+const lastSavedEl = document.getElementById('lastSaved');
+const galEl = document.getElementById('galeria');
+const ventaGrid = document.getElementById('ventaGrid');
+const tableBody = document.getElementById('tableBody');
+const statTotal = document.getElementById('statTotal');
+const statRepair = document.getElementById('statRepair');
+const statDone = document.getElementById('statDone');
+const statForSale = document.getElementById('statForSale');
+const statIncome = document.getElementById('statIncome');
+
+// form inputs
+const f_marca = document.getElementById('f_marca');
+const f_modelo = document.getElementById('f_modelo');
+const f_cliente = document.getElementById('f_cliente');
+const f_tipo = document.getElementById('f_tipo');
+const f_estado = document.getElementById('f_estado');
+const f_responsable = document.getElementById('f_responsable');
+const f_imgurl = document.getElementById('f_imgurl');
+const f_stock = document.getElementById('f_stock');
+const f_precio = document.getElementById('f_precio');
+const f_serial = document.getElementById('f_serial');
+const f_notas = document.getElementById('f_notas');
+const f_forSale = document.getElementById('f_forSale');
+const searchGlobal = document.getElementById('searchGlobal');
+const filterType = document.getElementById('filterType');
+
+// === NUEVO: filtro por marca ===
+const brandSelect = document.createElement('select');
+brandSelect.id = 'filterBrand';
+brandSelect.style = 'padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit';
+brandSelect.innerHTML = `<option value="">Filtrar marca</option>`;
+filterType.insertAdjacentElement('afterend', brandSelect);
+
+// buttons
+const btnAdd = document.getElementById('btnAdd');
+const btnClear = document.getElementById('btnClear');
+const btnExportCSV = document.getElementById('btnExportCSV');
+const btnReset = document.getElementById('btnReset');
+
+// helpers
+function uid(prefix='E-'){ return prefix + Math.random().toString(36).slice(2,9).toUpperCase(); }
+function save(){
+  const payload = { ...data, lastSaved: new Date().toISOString() };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  lastSavedEl.textContent = 'Último guardado: ' + new Date().toLocaleString();
+}
+function load(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(!raw){
+    data.equipos = [
+      { id: uid(), marca:'Dell', modelo:'Inspiron 15', tipo:'Portátil', estado:'Ingresado', cliente:'Carlos', responsable:'Ana', img:'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&q=60', notas:'No enciende', serial:'SN-001', createdAt:new Date().toISOString(), forSale:false },
+      { id: uid(), marca:'Samsung', modelo:'Galaxy A12', tipo:'Celular / Tablet', estado:'En reparación', cliente:'Luisa', responsable:'Jorge', img:'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&q=60', notas:'Pantalla rota', serial:'SN-002', createdAt:new Date().toISOString(), forSale:false }
+    ];
+    data.ventas = [
+      { id: uid('V-'), marca:'Lenovo', modelo:'ThinkPad T14', tipo:'Portátil', price:1250000, stock:2, img:'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&q=60', createdAt:new Date().toISOString(), sold:0 }
+    ];
+    save();
+  } else {
+    try {
+      const parsed = JSON.parse(raw);
+      data.equipos = parsed.equipos || [];
+      data.ventas = parsed.ventas || [];
+    } catch(e){ data = { equipos:[], ventas:[] }; }
+  }
+  renderAll();
+}
+
+// events
+btnAdd.addEventListener('click', onAdd);
+btnClear.addEventListener('click', clearForm);
+btnExportCSV.addEventListener('click', exportCSV);
+btnReset.addEventListener('click', ()=> {
+  if(confirm('¿Eliminar todos los datos guardados?')) {
+    localStorage.removeItem(STORAGE_KEY); location.reload();
+  }
+});
+searchGlobal.addEventListener('input', renderAll);
+filterType.addEventListener('change', renderAll);
+brandSelect.addEventListener('change', renderAll);
+
+function onAdd(){
+  const marca = f_marca.value.trim();
+  const modelo = f_modelo.value.trim();
+  const tipo = f_tipo.value;
+  const estado = f_estado.value;
+  const responsable = f_responsable.value.trim();
+  const img = f_imgurl.value.trim();
+  const cliente = f_cliente.value.trim();
+  const notas = f_notas.value.trim();
+  const serial = f_serial.value.trim();
+  const putForSale = f_forSale.checked;
+  const precio = Number(f_precio.value) || 0;
+  const stock = Number(f_stock.value) || 0;
+  if(!marca || !modelo || !tipo || !responsable){ return alert('Completa marca, modelo, tipo y responsable.'); }
+
+  const equipo = { id: uid(), marca, modelo, tipo, estado, cliente, responsable, img: img || '', notas, serial: serial || null, createdAt: new Date().toISOString(), forSale: !!putForSale };
+  data.equipos.push(equipo);
+
+  if(putForSale){
+    const venta = { id: uid('V-'), marca, modelo, tipo, price:precio, stock:Math.max(0,stock), img:img||'', createdAt:new Date().toISOString(), sold:0 };
+    data.ventas.push(venta);
+  }
+  clearForm(); save(); renderAll();
+}
+
+function clearForm(){
+  f_marca.value=''; f_modelo.value=''; f_cliente.value=''; f_tipo.value='';
+  f_estado.value='Ingresado'; f_responsable.value=''; f_imgurl.value='';
+  f_precio.value=''; f_stock.value=''; f_serial.value=''; f_notas.value='';
+  f_forSale.checked=false;
+}
+
+// rendering
+function renderAll(){
+  updateBrandFilter();
+  renderGaleria(); renderVentas(); renderTable(); renderStats();
+}
+
+function updateBrandFilter(){
+  const marcas = [...new Set(data.equipos.map(e=>e.marca).filter(Boolean))];
+  const current = brandSelect.value;
+  brandSelect.innerHTML = `<option value="">Filtrar marca</option>` + marcas.map(m=>`<option>${m}</option>`).join('');
+  if(marcas.includes(current)) brandSelect.value = current;
+}
+
+function renderGaleria(){
+  const q = searchGlobal.value.trim().toLowerCase();
+  const typeFilter = filterType.value;
+  const brandFilter = brandSelect.value;
+  galEl.innerHTML = '';
+  const filtered = data.equipos.filter(e=>{
+    if(typeFilter && e.tipo !== typeFilter) return false;
+    if(brandFilter && e.marca !== brandFilter) return false;
+    if(!q) return true;
+    return (e.marca && e.marca.toLowerCase().includes(q)) ||
+           (e.modelo && e.modelo.toLowerCase().includes(q)) ||
+           (e.cliente && e.cliente.toLowerCase().includes(q));
+  });
+  if(filtered.length === 0){ galEl.innerHTML = '<div class="muted">No hay equipos que coincidan con los filtros</div>'; return; }
+
+  filtered.slice().reverse().forEach(e=>{
+    const div = document.createElement('div'); div.className='thumb';
+    const img = document.createElement('img'); img.src = e.img || 'https://via.placeholder.com/300x200?text=No+image';
+    img.alt = e.marca + ' ' + e.modelo;
+    const meta = document.createElement('div'); meta.className='meta';
+    meta.innerHTML = `<b>${e.marca} ${e.modelo}</b><div class="muted">${e.tipo} • ${e.estado}</div><div class="muted">${e.cliente ? 'Cliente: '+e.cliente : ''}</div>`;
+    const actions = document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px';
+    const btnEdit = document.createElement('button'); btnEdit.className='small'; btnEdit.textContent='Editar'; btnEdit.addEventListener('click', ()=> openEdit(e.id));
+    const btnToSale = document.createElement('button'); btnToSale.className='small secondary'; btnToSale.textContent='Poner a la venta'; btnToSale.addEventListener('click', ()=> quickAddToSale(e.id));
+    actions.appendChild(btnEdit); actions.appendChild(btnToSale);
+    div.appendChild(img); div.appendChild(meta); div.appendChild(actions);
+    galEl.appendChild(div);
+  });
+}
+
+function renderVentas(){
+  ventaGrid.innerHTML = '';
+  if(data.ventas.length === 0){ ventaGrid.innerHTML = '<div class="muted">No hay productos para la venta</div>'; return; }
+  data.ventas.slice().reverse().forEach(v=>{
+    const c = document.createElement('div'); c.className='venta-card';
+    const img = document.createElement('img'); img.src = v.img || 'https://via.placeholder.com/400x300?text=No+image';
+    const info = document.createElement('div'); info.className='info';
+    info.innerHTML = `<b>${v.marca} ${v.modelo}</b><div class="muted">${v.tipo}</div><div class="price">${v.price ? v.price.toLocaleString() + ' COP' : 'Sin precio'}</div><div class="muted">Stock: ${v.stock} • Vendidos: ${v.sold}</div>`;
+    const actions = document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px';
+    const btnSold = document.createElement('button'); btnSold.textContent='Marcar vendido'; btnSold.addEventListener('click', ()=> markSold(v.id));
+    const btnEdit = document.createElement('button'); btnEdit.className='secondary'; btnEdit.textContent='Editar'; btnEdit.addEventListener('click', ()=> editVenta(v.id));
+    const btnRemove = document.createElement('button'); btnRemove.className='secondary'; btnRemove.textContent='Eliminar'; btnRemove.addEventListener('click', ()=> removeVenta(v.id));
+    actions.append(btnSold,btnEdit,btnRemove);
+    c.append(img,info,actions);
+    if(v.stock <= 0){ const badge=document.createElement('div'); badge.className='sold-badge'; badge.textContent='AGOTADO'; c.appendChild(badge); }
+    ventaGrid.appendChild(c);
+  });
+}
+
+function renderTable(){
+  tableBody.innerHTML='';
+  data.equipos.slice().reverse().forEach(e=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${e.id}</td><td><b style="color:var(--accent-2)">${e.marca} ${e.modelo}</b><div class="muted">${e.tipo}</div></td><td>${e.cliente||'-'}</td><td>${e.estado}</td><td>${e.forSale?'Sí':'No'}</td>`;
+    const tdActions=document.createElement('td');
+    const btnE=document.createElement('button'); btnE.className='small secondary'; btnE.textContent='Editar'; btnE.onclick=()=>openEdit(e.id);
+    const btnD=document.createElement('button'); btnD.className='small'; btnD.textContent='Eliminar'; btnD.onclick=()=>{ if(confirm('Eliminar este registro?')){data.equipos=data.equipos.filter(x=>x.id!==e.id);save();renderAll();} };
+    tdActions.append(btnE,btnD); tr.appendChild(tdActions); tableBody.appendChild(tr);
+  });
+}
+
+function renderStats(){
+  statTotal.textContent = data.equipos.length;
+  statRepair.textContent = data.equipos.filter(e=>e.estado==='En reparación').length;
+  statDone.textContent = data.equipos.filter(e=>e.estado==='Reparado').length;
+  statForSale.textContent = data.ventas.length;
+  const income = data.ventas.reduce((s,v)=>s+(v.price*(v.stock+v.sold)),0);
+  statIncome.textContent = income ? income.toLocaleString()+' COP' : '0';
+}
+
+// ventas y edición
+function markSold(vid){
+  const v=data.ventas.find(x=>x.id===vid);
+  if(!v) return; if(v.stock<=0) return alert('Stock agotado');
+  v.stock--; v.sold++; save(); renderAll();
+}
+function editVenta(vid){
+  const v=data.ventas.find(x=>x.id===vid);
+  if(!v) return;
+  const newP=prompt('Nuevo precio',v.price)||v.price;
+  const newS=prompt('Nuevo stock',v.stock)||v.stock;
+  v.price=Number(newP); v.stock=Number(newS); save(); renderAll();
+}
+function removeVenta(vid){
+  if(confirm('¿Eliminar venta?')){ data.ventas=data.ventas.filter(v=>v.id!==vid); save(); renderAll(); }
+}
+function quickAddToSale(eid){
+  const e=data.equipos.find(x=>x.id===eid);
+  if(!e)return;
+  const p=Number(prompt('Precio (COP)','0'))||0;
+  const s=Number(prompt('Stock inicial','1'))||1;
+  const v={id:uid('V-'),marca:e.marca,modelo:e.modelo,tipo:e.tipo,price:p,stock:s,img:e.img||'',createdAt:new Date().toISOString(),sold:0};
+  data.ventas.push(v); e.forSale=true; save(); renderAll();
+}
+function openEdit(id){
+  const e=data.equipos.find(x=>x.id===id);
+  if(!e)return;
+  if(!confirm('¿Cargar datos para editar?'))return;
+  f_marca.value=e.marca; f_modelo.value=e.modelo; f_tipo.value=e.tipo; f_estado.value=e.estado; f_responsable.value=e.responsable;
+  f_imgurl.value=e.img||''; f_serial.value=e.serial||''; f_notas.value=e.notas||''; f_cliente.value=e.cliente||''; f_forSale.checked=!!e.forSale;
+  data.equipos=data.equipos.filter(x=>x.id!==id); save(); renderAll();
+}
+
+// export CSV
+function exportCSV(){
+  const rows=[['ID','Marca','Modelo','Tipo','Estado','Cliente','Responsable','Serial','Notas','Imagen','ForSale','CreatedAt'].join(',')];
+  data.equipos.forEach(e=>rows.push([e.id,e.marca,e.modelo,e.tipo,e.estado,e.cliente,e.responsable,e.serial,e.notas,e.img,e.forSale?'SI':'NO',e.createdAt].map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')));
+  const blob=new Blob([rows.join('\n')],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='techgbr_equipos.csv'; a.click();
+}
+
+// init
+load();
+window.addEventListener('beforeunload',()=>save());
+</script>
+</body>
+</html>
